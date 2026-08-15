@@ -17,6 +17,7 @@ from vision_analytics.config import AppConfig, CameraConfig
 from vision_analytics.inference.models import Detector, load_detector, resolve_device
 from vision_analytics.inference.pool import SharedInferenceEngine
 from vision_analytics.ingest.rtsp import FrameSource, SyntheticSource
+from vision_analytics.insights import generate_insights, summarize_events
 from vision_analytics.overlay import draw_overlay, heatmap_image
 from vision_analytics.storage import EventStore
 from vision_analytics.types import Detection, FIRE_CLASS_ALIASES
@@ -282,6 +283,13 @@ class AnalyticsPipeline:
         blended = cv2.addWeighted(rt.last_frame, 0.45, img, 0.55, 0)
         ok, buf = cv2.imencode(".jpg", blended, [int(cv2.IMWRITE_JPEG_QUALITY), 75])
         return buf.tobytes() if ok else None
+
+    def analytics_bundle(self, limit: int = 2000) -> dict[str, Any]:
+        events = self.store.list_events(limit=limit)
+        cameras = self.camera_status()
+        summary = summarize_events(events)
+        insights = [i.as_dict() for i in generate_insights(events, cameras)]
+        return {"summary": summary, "insights": insights, "cameras": cameras, "events": events[:80]}
 
     def engine_stats(self) -> dict[str, Any]:
         if not self.engine:

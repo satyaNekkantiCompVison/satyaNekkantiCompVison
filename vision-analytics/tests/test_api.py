@@ -26,5 +26,8 @@ def test_health_and_cameras_with_mock_pipeline(tmp_path):
         assert {"store-demo", "traffic-demo", "fire-demo"} <= ids
         events = client.get("/api/events").json()
         assert isinstance(events, list)
+        insights = client.get("/api/insights").json()
+        assert "insights" in insights
+        assert "summary" in insights
     finally:
         pipe.stop()

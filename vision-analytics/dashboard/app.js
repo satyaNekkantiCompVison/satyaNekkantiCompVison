@@ -1,4 +1,6 @@
 const $ = (sel) => document.querySelector(sel);
+let lastInsights = [];
+let lastSummary = { by_type: {}, by_camera: {}, total: 0 };
 
 document.querySelectorAll(".tabs button").forEach((btn) => {
   btn.addEventListener("click", () => {
@@ -23,6 +25,45 @@ function camCard(cam, extra = "") {
   </article>`;
 }
 
+function insightCard(item) {
+  const ev = item.evidence || {};
+  const bits = Object.entries(ev)
+    .slice(0, 6)
+    .map(([k, v]) => `${k.replaceAll("_", " ")}: ${typeof v === "object" ? JSON.stringify(v) : v}`)
+    .join(" · ");
+  return `<article class="insight ${item.severity || "info"}">
+    <span class="badge ${item.severity === "action" ? "crit" : item.severity === "watch" ? "warn" : "ok"}">${item.domain} · ${item.severity}</span>
+    <h3>${item.title}</h3>
+    <p>${item.recommendation}</p>
+    ${bits ? `<p class="meta-line">${bits}</p>` : ""}
+  </article>`;
+}
+
+function renderInsights(list, selector) {
+  const el = $(selector);
+  if (!el) return;
+  const items = list || [];
+  el.innerHTML = items.length ? items.map(insightCard).join("") : `<p class="muted">Waiting for accumulated events…</p>`;
+}
+
+function renderBars(counts, selector, clsFor) {
+  const el = $(selector);
+  if (!el) return;
+  const entries = Object.entries(counts || {});
+  if (!entries.length) {
+    el.innerHTML = `<p class="muted">No events stored yet.</p>`;
+    return;
+  }
+  const max = Math.max(...entries.map(([, n]) => n), 1);
+  el.innerHTML = entries
+    .sort((a, b) => b[1] - a[1])
+    .map(([label, n]) => {
+      const cls = clsFor ? clsFor(label) : "";
+      return `<div class="bar-row ${cls}"><span>${label}</span><div class="track"><div class="fill" style="width:${(n / max) * 100}%"></div></div><strong>${n}</strong></div>`;
+    })
+    .join("");
+}
+
 function setEngine(engine) {
   if (!engine) return;
   $("#kpi-fps").textContent = engine.fps != null ? engine.fps.toFixed(1) : "—";
@@ -31,6 +72,24 @@ function setEngine(engine) {
   $("#kpi-queue").textContent = engine.queue_depth ?? "—";
   $("#kpi-device").textContent = engine.device || "—";
   $("#kpi-fps").style.color = engine.meeting_target ? "var(--ok)" : "var(--warn)";
+}
+
+function applyInsights(insights, summary) {
+  lastInsights = insights || lastInsights;
+  lastSummary = summary || lastSummary;
+  const action = lastInsights.filter((i) => i.severity === "action").slice(0, 3);
+  renderInsights(action.length ? action : lastInsights.slice(0, 3), "#overview-insights");
+  renderInsights(lastInsights, "#insight-board");
+  renderInsights(lastInsights.filter((i) => i.domain === "store"), "#store-insights");
+  renderInsights(lastInsights.filter((i) => i.domain === "traffic"), "#traffic-insights");
+  renderInsights(lastInsights.filter((i) => i.domain === "fire"), "#fire-insights");
+  renderBars(lastSummary.by_type, "#type-bars", (t) => {
+    if (t.includes("wrong")) return "wrong";
+    if (t.includes("jump") || t.includes("fire")) return "jump";
+    if (t.includes("people")) return "people";
+    return "";
+  });
+  renderBars(lastSummary.by_camera, "#cam-bars");
 }
 
 function render(cameras) {
@@ -67,15 +126,30 @@ function render(cameras) {
   $("#fire-cams").innerHTML = fire.map((c) => camCard(c, `<p>${c.fire.active ? "ALERT" : "clear"} · fire ${c.fire.fire_count} · smoke ${c.fire.smoke_count}</p>`)).join("");
 }
 
+function eventDetail(e) {
+  if (e.type === "people_count") return `${e.kind || "cross"} · in ${e.in_count} / out ${e.out_count} · occupancy ${e.occupancy}`;
+  if (e.type === "vehicle_crossing") return `${e.label || "vehicle"} crossed · total ${e.total} · signal ${e.signal || "n/a"}`;
+  if (e.type === "wrong_way") return `${e.label || "vehicle"} against flow (dot ${e.dot})`;
+  if (e.type === "signal_jump") return `${e.label || "vehicle"} ran ${e.signal || "red"}`;
+  if (e.type === "fire_smoke_alert") return `${e.kind} · conf ${e.confidence} · fire ${e.fire_count} smoke ${e.smoke_count}`;
+  return JSON.stringify(e).slice(0, 180);
+}
+
 async function loadEvents() {
   const type = $("#event-filter").value;
-  const qs = type ? `?type=${encodeURIComponent(type)}` : "";
+  const qs = type ? `?type=${encodeURIComponent(type)}&limit=300` : "?limit=300";
   const rows = await fetch(`/api/events${qs}`).then((r) => r.json());
   $("#event-rows").innerHTML = rows.map((e) => {
     const when = new Date((e.ts || 0) * 1000).toLocaleString();
-    const detail = JSON.stringify(e, null, 0).slice(0, 240);
-    return `<tr><td>${when}</td><td>${e.camera_id || ""}</td><td>${e.type}</td><td><code>${detail}</code></td></tr>`;
+    return `<tr><td>${when}</td><td>${e.camera_id || ""}</td><td class="event-type">${e.type}</td><td>${eventDetail(e)}</td></tr>`;
   }).join("");
+  const counts = {};
+  rows.forEach((e) => {
+    counts[e.type] = (counts[e.type] || 0) + 1;
+  });
+  $("#event-stats").innerHTML = Object.entries(counts)
+    .map(([k, v]) => `<div class="chip"><span>${k}</span><strong>${v}</strong></div>`)
+    .join("") || `<div class="chip"><span>Events</span><strong>0</strong></div>`;
 }
 
 $("#refresh-events").addEventListener("click", loadEvents);
@@ -88,6 +162,7 @@ function connect() {
     const payload = JSON.parse(msg.data);
     if (payload.engine) setEngine(payload.engine);
     if (payload.cameras) render(payload.cameras);
+    if (payload.insights || payload.summary) applyInsights(payload.insights, payload.summary);
     if (payload.kind === "event") loadEvents();
   };
   ws.onclose = () => setTimeout(connect, 1500);
@@ -95,5 +170,6 @@ function connect() {
 
 fetch("/api/cameras").then((r) => r.json()).then(render).catch(() => {});
 fetch("/api/engine").then((r) => r.json()).then(setEngine).catch(() => {});
+fetch("/api/insights").then((r) => r.json()).then((d) => applyInsights(d.insights, d.summary)).catch(() => {});
 loadEvents();
 connect();

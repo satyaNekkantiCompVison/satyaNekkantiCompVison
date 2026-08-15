@@ -59,7 +59,8 @@ class EventStore:
         self,
         camera_id: str | None = None,
         type_: str | None = None,
-        limit: int = 200,
+        limit: int = 500,
+        since_ts: float | None = None,
     ) -> list[dict[str, Any]]:
         query = "SELECT payload FROM events WHERE 1=1"
         params: list[Any] = []
@@ -69,6 +70,9 @@ class EventStore:
         if type_:
             query += " AND type = ?"
             params.append(type_)
+        if since_ts is not None:
+            query += " AND ts >= ?"
+            params.append(since_ts)
         query += " ORDER BY ts DESC LIMIT ?"
         params.append(limit)
         with self._connect() as conn:

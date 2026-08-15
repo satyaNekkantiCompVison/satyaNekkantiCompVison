@@ -88,6 +88,15 @@ def create_app(pipeline: AnalyticsPipeline) -> FastAPI:
     async def events(camera_id: str | None = None, type: str | None = None, limit: int = 200) -> list[dict[str, Any]]:
         return pipeline.store.list_events(camera_id=camera_id, type_=type, limit=limit)
 
+    @app.get("/api/analytics")
+    async def analytics() -> dict[str, Any]:
+        return pipeline.analytics_bundle()
+
+    @app.get("/api/insights")
+    async def insights() -> dict[str, Any]:
+        bundle = pipeline.analytics_bundle()
+        return {"insights": bundle["insights"], "summary": bundle["summary"]}
+
     @app.get("/api/heatmap/{camera_id}")
     async def heatmap(camera_id: str) -> JSONResponse:
         rt = pipeline.cameras.get(camera_id)
@@ -127,10 +136,32 @@ def create_app(pipeline: AnalyticsPipeline) -> FastAPI:
     async def ws_live(ws: WebSocket) -> None:
         await hub.register(ws)
         try:
-            await ws.send_text(json.dumps({"kind": "hello", "cameras": pipeline.camera_status(), "engine": pipeline.engine_stats()}))
+            bundle = pipeline.analytics_bundle()
+            await ws.send_text(
+                json.dumps(
+                    {
+                        "kind": "hello",
+                        "cameras": bundle["cameras"],
+                        "engine": pipeline.engine_stats(),
+                        "insights": bundle["insights"],
+                        "summary": bundle["summary"],
+                    }
+                )
+            )
             while True:
-                await ws.send_text(json.dumps({"kind": "status", "cameras": pipeline.camera_status(), "engine": pipeline.engine_stats()}))
                 await asyncio.sleep(1.0)
+                bundle = pipeline.analytics_bundle()
+                await ws.send_text(
+                    json.dumps(
+                        {
+                            "kind": "status",
+                            "cameras": bundle["cameras"],
+                            "engine": pipeline.engine_stats(),
+                            "insights": bundle["insights"],
+                            "summary": bundle["summary"],
+                        }
+                    )
+                )
         except WebSocketDisconnect:
             pass
         finally:

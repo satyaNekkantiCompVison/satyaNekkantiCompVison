@@ -10,7 +10,7 @@
   <header class="topbar">
     <div>
       <h1>Vision Analytics</h1>
-      <p class="muted">Shared-GPU YOLO · fire/smoke · store · traffic</p>
+      <p class="muted">Shared-GPU YOLO · live cameras · events · AI operations insights</p>
     </div>
     <div class="engine" id="engine">
       <div class="kpi"><span>GPU FPS</span><strong id="kpi-fps">—</strong></div>
@@ -23,6 +23,7 @@
 
   <nav class="tabs">
     <button data-tab="overview" class="active">Overview</button>
+    <button data-tab="insights">AI insights</button>
     <button data-tab="store">Store</button>
     <button data-tab="traffic">Traffic</button>
     <button data-tab="fire">Fire &amp; smoke</button>
@@ -31,30 +32,50 @@
 
   <main>
     <section id="tab-overview" class="tab active">
+      <div id="overview-insights" class="insight-row"></div>
       <div class="grid cams" id="camera-grid"></div>
     </section>
 
+    <section id="tab-insights" class="tab">
+      <div class="split">
+        <article>
+          <h2>What the cameras imply</h2>
+          <p class="muted">Recommendations are generated from accumulated counts and event rates (staffing, inventory, congestion, wrong-way hotspots).</p>
+          <div id="insight-board" class="insight-board"></div>
+        </article>
+        <article>
+          <h2>Event mix</h2>
+          <div id="type-bars" class="bars"></div>
+          <h2>By camera</h2>
+          <div id="cam-bars" class="bars"></div>
+        </article>
+      </div>
+    </section>
+
     <section id="tab-store" class="tab">
+      <div id="store-insights" class="insight-row"></div>
+      <div id="store-kpis" class="kpis"></div>
       <div class="split">
         <article>
           <h2>People counting</h2>
-          <div id="store-kpis" class="kpis"></div>
           <div id="store-cams" class="grid cams"></div>
         </article>
         <article>
           <h2>Occupancy heat map</h2>
-          <p class="muted">Accumulated footfall from pretrained person detections.</p>
+          <p class="muted">Accumulated footfall from person detections.</p>
           <div id="heatmaps" class="heatmaps"></div>
         </article>
       </div>
     </section>
 
     <section id="tab-traffic" class="tab">
+      <div id="traffic-insights" class="insight-row"></div>
       <div id="traffic-kpis" class="kpis"></div>
       <div id="traffic-cams" class="grid cams"></div>
     </section>
 
     <section id="tab-fire" class="tab">
+      <div id="fire-insights" class="insight-row"></div>
       <div id="fire-kpis" class="kpis"></div>
       <div id="fire-cams" class="grid cams"></div>
     </section>
@@ -71,9 +92,10 @@
         </select>
         <button id="refresh-events">Refresh</button>
       </div>
+      <div id="event-stats" class="kpis"></div>
       <table>
         <thead>
-          <tr><th>Time</th><th>Camera</th><th>Type</th><th>Detail</th></tr>
+          <tr><th>Time</th><th>Camera</th><th>Type</th><th>What happened</th></tr>
         </thead>
         <tbody id="event-rows"></tbody>
       </table>

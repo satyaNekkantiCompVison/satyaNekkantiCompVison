@@ -54,6 +54,14 @@ python -m vision_analytics.main --demo
 
 Open [http://127.0.0.1:8080](http://127.0.0.1:8080). Clips loop continuously.
 
+The **AI insights** tab turns stored events into operations actions, for example:
+
+- Store: rising footfall → extra cashiers and replenishment for fast-moving SKUs
+- Traffic: heavy volume at a signal, or a wrong-way hotspot at a particular junction
+- Fire: recent smoke/flame alerts
+
+Raw events are listed in a readable table (not JSON dumps). APIs: `GET /api/events`, `GET /api/insights`, `GET /api/analytics`.
+
 To prove **RTSP ingest**, uncomment the Wowza test camera in `configs/cameras.demo.yaml` (official looping test stream, not analytics footage) or publish your own:
 
 ```bash
