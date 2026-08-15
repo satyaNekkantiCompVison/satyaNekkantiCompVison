@@ -1,0 +1,58 @@
+cameras:
+  - id: lobby-cam-01
+    name: Store entrance
+    enabled: true
+    source: "rtsp://user:pass@192.168.1.10:554/Streaming/Channels/101"
+    modules: [store, fire]
+    sample_fps: 15
+    store:
+      count_line: [[0.15, 0.72], [0.85, 0.72]]
+      in_direction: down          # people moving down across the line enter
+      heatmap_bins: [64, 36]
+    fire:
+      conf: 0.4
+      cooldown_sec: 8
+
+  - id: aisle-cam-02
+    name: Aisle heat map
+    enabled: true
+    source: "rtsp://user:pass@192.168.1.11:554/Streaming/Channels/101"
+    modules: [store]
+    sample_fps: 10
+    store:
+      count_line: [[0.05, 0.55], [0.95, 0.55]]
+      in_direction: down
+      heatmap_bins: [80, 45]
+
+  - id: junction-cam-01
+    name: Traffic signal
+    enabled: true
+    source: "rtsp://user:pass@192.168.1.20:554/Streaming/Channels/101"
+    modules: [traffic, fire]
+    sample_fps: 20
+    traffic:
+      allowed_direction: left_to_right   # left_to_right | right_to_left | top_to_bottom | bottom_to_top
+      stop_line: [[0.10, 0.78], [0.90, 0.78]]
+      signal_roi: [0.62, 0.08, 0.78, 0.28]  # normalized xyxy for the traffic light
+      min_track_age: 5
+      wrong_way_dot: -0.35
+
+  - id: demo-webcam
+    name: Local demo (webcam / file)
+    enabled: false
+    source: "0"                 # OpenCV index, file path, or rtsp://
+    modules: [store, fire, traffic]
+    sample_fps: 15
+    store:
+      count_line: [[0.2, 0.7], [0.8, 0.7]]
+      in_direction: down
+      heatmap_bins: [64, 36]
+    traffic:
+      allowed_direction: left_to_right
+      stop_line: [[0.1, 0.8], [0.9, 0.8]]
+      signal_roi: [0.7, 0.05, 0.9, 0.25]
+      min_track_age: 4
+      wrong_way_dot: -0.35
+    fire:
+      conf: 0.35
+      cooldown_sec: 5

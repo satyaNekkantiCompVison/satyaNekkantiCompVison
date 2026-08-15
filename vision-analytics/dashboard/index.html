@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Vision Analytics — CCTV Operations</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <h1>Vision Analytics</h1>
+      <p class="muted">Shared-GPU YOLO · fire/smoke · store · traffic</p>
+    </div>
+    <div class="engine" id="engine">
+      <div class="kpi"><span>GPU FPS</span><strong id="kpi-fps">—</strong></div>
+      <div class="kpi"><span>Target</span><strong id="kpi-target">90</strong></div>
+      <div class="kpi"><span>Batch</span><strong id="kpi-batch">—</strong></div>
+      <div class="kpi"><span>Queue</span><strong id="kpi-queue">—</strong></div>
+      <div class="kpi"><span>Device</span><strong id="kpi-device">—</strong></div>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <button data-tab="overview" class="active">Overview</button>
+    <button data-tab="store">Store</button>
+    <button data-tab="traffic">Traffic</button>
+    <button data-tab="fire">Fire &amp; smoke</button>
+    <button data-tab="events">Events</button>
+  </nav>
+
+  <main>
+    <section id="tab-overview" class="tab active">
+      <div class="grid cams" id="camera-grid"></div>
+    </section>
+
+    <section id="tab-store" class="tab">
+      <div class="split">
+        <article>
+          <h2>People counting</h2>
+          <div id="store-kpis" class="kpis"></div>
+          <div id="store-cams" class="grid cams"></div>
+        </article>
+        <article>
+          <h2>Occupancy heat map</h2>
+          <p class="muted">Accumulated footfall from pretrained person detections.</p>
+          <div id="heatmaps" class="heatmaps"></div>
+        </article>
+      </div>
+    </section>
+
+    <section id="tab-traffic" class="tab">
+      <div id="traffic-kpis" class="kpis"></div>
+      <div id="traffic-cams" class="grid cams"></div>
+    </section>
+
+    <section id="tab-fire" class="tab">
+      <div id="fire-kpis" class="kpis"></div>
+      <div id="fire-cams" class="grid cams"></div>
+    </section>
+
+    <section id="tab-events" class="tab">
+      <div class="toolbar">
+        <select id="event-filter">
+          <option value="">All types</option>
+          <option value="fire_smoke_alert">Fire / smoke</option>
+          <option value="people_count">People count</option>
+          <option value="wrong_way">Wrong way</option>
+          <option value="signal_jump">Signal jump</option>
+          <option value="vehicle_crossing">Vehicle crossing</option>
+        </select>
+        <button id="refresh-events">Refresh</button>
+      </div>
+      <table>
+        <thead>
+          <tr><th>Time</th><th>Camera</th><th>Type</th><th>Detail</th></tr>
+        </thead>
+        <tbody id="event-rows"></tbody>
+      </table>
+    </section>
+  </main>
+  <script src="/static/app.js"></script>
+</body>
+</html>

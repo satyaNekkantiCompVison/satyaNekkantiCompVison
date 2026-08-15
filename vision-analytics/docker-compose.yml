@@ -1,0 +1,14 @@
+services:
+  analytics:
+    build: .
+    ports:
+      - "8080:8080"
+    gpus: all
+    shm_size: "2gb"
+    volumes:
+      - ./configs:/app/configs
+      - ./weights:/app/weights
+      - ./data:/app/data
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+    command: ["python", "-m", "vision_analytics.main", "--cameras", "configs/cameras.yaml"]

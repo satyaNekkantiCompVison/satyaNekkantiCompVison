@@ -1,0 +1,28 @@
+engine:
+  device: "auto"            # auto | cpu | cuda | cuda:0
+  half: true                # FP16 on CUDA
+  target_fps: 90            # aggregate GPU throughput goal
+  max_batch_size: 16
+  max_batch_wait_ms: 8      # dynamic batching window
+  imgsz: 640
+  conf: 0.35
+  iou: 0.45
+  workers: 1                # GPU inference workers (usually 1 per GPU)
+
+models:
+  coco:
+    weights: "yolov8n.pt"
+    task: detect
+  fire:
+    # Pretrained fire/smoke YOLO. Download with: python scripts/download_models.py
+    weights: "weights/yolov8n-fire-smoke.pt"
+    url: "https://huggingface.co/keremberke/yolov8n-fire-and-smoke-detection/resolve/main/best.pt"
+    classes: ["fire", "smoke"]
+
+storage:
+  sqlite_path: "data/events.db"
+  snapshot_dir: "data/snapshots"
+
+dashboard:
+  host: "0.0.0.0"
+  port: 8080
