@@ -53,6 +53,17 @@ class SharedInferenceEngine:
             t.start()
             self._threads.append(t)
 
+    def warmup(self) -> None:
+        """Run one dummy batch per model so the first live frame is not a 10–30s cold start."""
+        dummy = np.zeros((self.engine.imgsz, self.engine.imgsz, 3), dtype=np.uint8)
+        for detector in self.models.values():
+            detector.predict_batch(
+                [dummy],
+                conf=self.engine.conf,
+                iou=self.engine.iou,
+                imgsz=self.engine.imgsz,
+            )
+
     def stop(self) -> None:
         self._stop.set()
         for _ in self._threads:

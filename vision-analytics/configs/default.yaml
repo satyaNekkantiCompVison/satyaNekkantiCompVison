@@ -1,6 +1,6 @@
 engine:
-  device: "auto"            # auto | cpu | cuda | cuda:0
-  half: true                # FP16 on CUDA
+  device: "auto"            # auto | cpu | mps | cuda | cuda:0
+  half: true                # FP16 on CUDA only (never passed on CPU — avoids Ultralytics warning)
   target_fps: 90            # aggregate GPU throughput goal
   max_batch_size: 16
   max_batch_wait_ms: 8      # dynamic batching window
@@ -8,6 +8,8 @@ engine:
   conf: 0.35
   iou: 0.45
   workers: 1                # GPU inference workers (usually 1 per GPU)
+  infer_timeout_sec: 60     # first CPU YOLO pass can take 10–30s; do not use 2s
+  warmup: true              # dummy predict so live cameras do not hit cold start
 
 models:
   coco:

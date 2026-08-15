@@ -17,6 +17,8 @@ class EngineConfig(BaseModel):
     conf: float = 0.35
     iou: float = 0.45
     workers: int = 1
+    infer_timeout_sec: float = 60.0
+    warmup: bool = True
 
 
 class ModelSlotConfig(BaseModel):

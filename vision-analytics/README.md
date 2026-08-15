@@ -44,6 +44,8 @@ Synthetic cameras (no RTSP required):
 python -m vision_analytics.main --demo
 ```
 
+On CPU (including macOS without NVIDIA), the first YOLO pass is slow. The pipeline now **warms up** both models before cameras start and waits up to 60s per batch. You should see `warmup finished in …s` then the dashboard; a 2s wait used to raise `TimeoutError` during that cold start. Apple Silicon uses `device=mps` automatically. The Ultralytics `'half' is deprecated` warning is avoided on CPU by not passing `half`.
+
 Open [http://127.0.0.1:8080](http://127.0.0.1:8080).
 
 Live RTSP:

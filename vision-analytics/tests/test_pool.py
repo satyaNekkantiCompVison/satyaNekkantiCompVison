@@ -17,6 +17,9 @@ def test_shared_engine_batches_multiple_cameras():
         {"coco": model},
         EngineConfig(max_batch_size=8, max_batch_wait_ms=20, workers=1),
     )
+    engine.warmup()
+    warmup_calls = model.calls
+    assert warmup_calls >= 1
     engine.start()
     frames = [np.zeros((64, 64, 3), dtype=np.uint8) for _ in range(6)]
     futs = [engine.submit(f"cam-{i}", "coco", frames[i]) for i in range(6)]
@@ -24,9 +27,9 @@ def test_shared_engine_batches_multiple_cameras():
     engine.stop()
     assert all(r and r[0].label == "person" for r in results)
     assert all(r[0].camera_id.startswith("cam-") for r in results)
-    assert model.calls >= 1
+    assert model.calls > warmup_calls
     # Dynamic batching should collapse several frames into fewer GPU calls.
-    assert model.calls < 6
+    assert (model.calls - warmup_calls) < 6
     stats = engine.stats()
     assert stats["total_frames"] >= 6
     time.sleep(0.01)

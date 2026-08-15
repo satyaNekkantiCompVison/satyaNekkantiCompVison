@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import threading
 import time
+from concurrent.futures import wait as wait_futures
 from pathlib import Path
 from typing import Any
 
@@ -51,6 +52,7 @@ class CameraRuntime:
         self.last_detections: list[Detection] = []
         self.last_ts = 0.0
         self.processed = 0
+        self.busy = False
 
 
 class AnalyticsPipeline:
@@ -73,6 +75,14 @@ class AnalyticsPipeline:
     def start(self) -> None:
         self._load_models()
         self.engine = SharedInferenceEngine(self.models, self.config.engine)
+        if self.config.engine.warmup and not self.mock:
+            log.info("warming up models on %s (first YOLO pass can take 10–30s on CPU)...", self.device)
+            t0 = time.perf_counter()
+            try:
+                self.engine.warmup()
+            except Exception:
+                log.exception("warmup failed; live inference will still run")
+            log.info("warmup finished in %.1fs", time.perf_counter() - t0)
         self.engine.start()
         for cam in self.config.cameras:
             if not cam.enabled:
@@ -136,7 +146,7 @@ class AnalyticsPipeline:
                 self.models[key] = load_detector(
                     weights=weights,
                     device=self.device,
-                    half=self.config.engine.half and self.device != "cpu",
+                    half=self.config.engine.half and str(self.device).startswith("cuda"),
                     class_filter=class_filter,
                     names_override=names_override,
                     mock=self.mock,
@@ -161,8 +171,16 @@ class AnalyticsPipeline:
             if seq == last_seq:
                 time.sleep(0.005)
                 continue
+            if rt.busy:
+                # Previous YOLO batch still running; keep the newest frame in the buffer.
+                time.sleep(0.005)
+                continue
             last_seq = seq
-            self._process_frame(rt, frame, ts)
+            rt.busy = True
+            try:
+                self._process_frame(rt, frame, ts)
+            finally:
+                rt.busy = False
 
     def _process_frame(self, rt: CameraRuntime, frame: np.ndarray, ts: float) -> None:
         assert self.engine is not None
@@ -173,10 +191,23 @@ class AnalyticsPipeline:
         if "fire" in modules and "fire" in self.models:
             futures.append(("fire", self.engine.submit(rt.cfg.id, "fire", frame)))
 
+        timeout = max(5.0, float(self.config.engine.infer_timeout_sec))
+        wait_futures([f for _, f in futures], timeout=timeout)
         dets: list[Detection] = []
         for key, fut in futures:
             try:
-                part = fut.result(timeout=2.0)
+                if not fut.done():
+                    raise TimeoutError()
+                part = fut.result(timeout=0)
+            except TimeoutError:
+                log.warning(
+                    "inference still running after %.0fs camera=%s model=%s device=%s; dropping this frame",
+                    timeout,
+                    rt.cfg.id,
+                    key,
+                    self.device,
+                )
+                part = []
             except Exception:
                 log.exception("inference failed camera=%s model=%s", rt.cfg.id, key)
                 part = []

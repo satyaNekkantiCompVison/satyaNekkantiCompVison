@@ -36,7 +36,8 @@ class UltralyticsDetector:
         path = Path(weights)
         self.model = YOLO(str(path))
         self.device = device
-        self.half = half and device != "cpu"
+        # FP16 is CUDA-only. Passing half= on CPU also trips Ultralytics' deprecation warning.
+        self.half = bool(half) and str(device).startswith("cuda")
         self.class_filter = {c.lower() for c in class_filter} if class_filter else None
         self.names_override = names_override or {}
         raw_names = getattr(self.model, "names", {}) or {}
@@ -55,16 +56,18 @@ class UltralyticsDetector:
     ) -> list[list[Detection]]:
         if not images:
             return []
-        results = self.model.predict(
-            source=images,
-            conf=conf,
-            iou=iou,
-            imgsz=imgsz,
-            device=self.device,
-            half=self.half,
-            verbose=False,
-            stream=False,
-        )
+        predict_kw = {
+            "source": images,
+            "conf": conf,
+            "iou": iou,
+            "imgsz": imgsz,
+            "device": self.device,
+            "verbose": False,
+            "stream": False,
+        }
+        if self.half:
+            predict_kw["half"] = True
+        results = self.model.predict(**predict_kw)
         out: list[list[Detection]] = []
         for result in results:
             dets: list[Detection] = []
@@ -137,6 +140,9 @@ def resolve_device(preferred: str) -> str:
 
         if torch.cuda.is_available():
             return "cuda:0"
+        mps = getattr(torch.backends, "mps", None)
+        if mps is not None and mps.is_available():
+            return "mps"
     except Exception:
         pass
     return "cpu"
