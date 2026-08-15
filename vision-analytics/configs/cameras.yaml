@@ -1,0 +1,40 @@
+cameras:
+  # Default is synthetic. For a customer demo with real sample CCTV:
+  #   python scripts/download_samples.py
+  #   python -m vision_analytics.main --demo
+  - id: lobby-cam-01
+    name: Store entrance
+    enabled: true
+    source: "synthetic://store"
+    modules: [store, fire]
+    sample_fps: 15
+    store:
+      count_line: [[0.15, 0.72], [0.85, 0.72]]
+      in_direction: down
+      heatmap_bins: [64, 36]
+    fire:
+      conf: 0.4
+      cooldown_sec: 8
+
+  - id: junction-cam-01
+    name: Traffic signal
+    enabled: true
+    source: "synthetic://traffic"
+    modules: [traffic]
+    sample_fps: 20
+    traffic:
+      allowed_direction: left_to_right
+      stop_line: [[0.10, 0.78], [0.90, 0.78]]
+      signal_roi: [0.62, 0.08, 0.78, 0.28]
+      min_track_age: 5
+      wrong_way_dot: -0.35
+
+  - id: fire-watch-01
+    name: Fire watch
+    enabled: true
+    source: "synthetic://fire"
+    modules: [fire]
+    sample_fps: 10
+    fire:
+      conf: 0.35
+      cooldown_sec: 5

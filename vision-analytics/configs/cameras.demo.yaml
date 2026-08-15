@@ -1,0 +1,55 @@
+# Customer demo cameras: looping sample CCTV files from scripts/download_samples.py
+# Run: python scripts/download_samples.py && python -m vision_analytics.main --demo
+cameras:
+  - id: store-demo
+    name: Store aisle (sample CCTV)
+    enabled: true
+    source: "samples/store-aisle-detection.mp4"
+    modules: [store]
+    sample_fps: 12
+    store:
+      count_line: [[0.15, 0.62], [0.85, 0.62]]
+      in_direction: down
+      heatmap_bins: [64, 36]
+
+  - id: people-demo
+    name: Pedestrian plaza (sample CCTV)
+    enabled: true
+    source: "samples/people-detection.mp4"
+    modules: [store]
+    sample_fps: 12
+    store:
+      count_line: [[0.10, 0.70], [0.90, 0.70]]
+      in_direction: down
+      heatmap_bins: [80, 45]
+
+  - id: traffic-demo
+    name: Road / vehicles (sample CCTV)
+    enabled: true
+    source: "samples/person-bicycle-car-detection.mp4"
+    modules: [traffic]
+    sample_fps: 15
+    traffic:
+      allowed_direction: left_to_right
+      stop_line: [[0.08, 0.72], [0.92, 0.72]]
+      signal_roi: [0.70, 0.04, 0.92, 0.22]
+      min_track_age: 4
+      wrong_way_dot: -0.35
+
+  - id: fire-demo
+    name: Fire watch (sample video)
+    enabled: true
+    source: "samples/fire-burning.ogv"
+    modules: [fire]
+    sample_fps: 10
+    fire:
+      conf: 0.25
+      cooldown_sec: 6
+
+  # Official Wowza RTSP test loop — protocol check only, not analytics footage.
+  # - id: wowza-rtsp
+  #   name: Wowza RTSP test
+  #   enabled: false
+  #   source: "rtsp://9627b0bf2a7b.entrypoint.cloud.wowza.com:1935/app-p5260J38/66abe4b9_stream1"
+  #   modules: [store]
+  #   sample_fps: 8

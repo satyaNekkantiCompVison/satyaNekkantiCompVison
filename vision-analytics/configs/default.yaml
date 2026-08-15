@@ -1,0 +1,34 @@
+engine:
+  device: "auto"            # auto | cpu | mps | cuda | cuda:0
+  half: true                # FP16 on CUDA only (never passed on CPU — avoids Ultralytics warning)
+  target_fps: 90            # aggregate GPU throughput goal
+  max_batch_size: 16
+  max_batch_wait_ms: 8      # dynamic batching window
+  imgsz: 640
+  conf: 0.35
+  iou: 0.45
+  workers: 1                # GPU inference workers (usually 1 per GPU)
+  infer_timeout_sec: 60     # first CPU YOLO pass can take 10–30s; do not use 2s
+  warmup: true              # dummy predict so live cameras do not hit cold start
+
+models:
+  coco:
+    weights: "yolov8n.pt"
+    task: detect
+  fire:
+    # Pretrained fire/smoke YOLO. Download with: python scripts/download_models.py
+    # keremberke is gated (HTTP 401); GitHub + rabahdev mirrors are used first.
+    weights: "weights/yolov8n-fire-smoke.pt"
+    url: "https://github.com/Nocluee100/Fire-and-Smoke-Detection-yolov8-v1/raw/main/weights/best.pt"
+    urls:
+      - "https://huggingface.co/rabahdev/fire-smoke-yolov8n/resolve/main/best.pt"
+      - "https://huggingface.co/keremberke/yolov8n-fire-and-smoke-detection/resolve/main/best.pt"
+    classes: ["fire", "smoke"]
+
+storage:
+  sqlite_path: "data/events.db"
+  snapshot_dir: "data/snapshots"
+
+dashboard:
+  host: "0.0.0.0"
+  port: 8080
