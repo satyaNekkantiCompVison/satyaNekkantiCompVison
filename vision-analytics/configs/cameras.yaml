@@ -1,4 +1,7 @@
 cameras:
+  # Default is synthetic. For a customer demo with real sample CCTV:
+  #   python scripts/download_samples.py
+  #   python -m vision_analytics.main --demo
   - id: lobby-cam-01
     name: Store entrance
     enabled: true

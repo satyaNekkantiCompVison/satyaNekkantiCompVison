@@ -36,17 +36,33 @@ python scripts/download_models.py
 
 If a Hugging Face URL returns **HTTP 401 Unauthorized**, that checkpoint is gated. The downloader already skips it and uses a public GitHub mirror (`Nocluee100/.../best.pt`) then `rabahdev/fire-smoke-yolov8n`. Optional: `export HF_TOKEN=...` to retry gated HF repos.
 
-## Run the dashboard
+## Customer demo (real sample CCTV, not synthetic)
 
-Synthetic cameras (no RTSP required):
+`--demo` downloads **licensed** sample videos and loops them as cameras (same ingest path as RTSP files). These are Intel OpenVINO sample clips plus a Wikimedia fire video — not random “public IP cameras,” which are usually unauthorized and go offline.
 
 ```bash
+python scripts/download_samples.py
 python -m vision_analytics.main --demo
 ```
 
-On CPU (including macOS without NVIDIA), the first YOLO pass is slow. The pipeline now **warms up** both models before cameras start and waits up to 60s per batch. You should see `warmup finished in …s` then the dashboard; a 2s wait used to raise `TimeoutError` during that cold start. Apple Silicon uses `device=mps` automatically. The Ultralytics `'half' is deprecated` warning is avoided on CPU by not passing `half`.
+| Camera | Clip | Source |
+| --- | --- | --- |
+| Store aisle | `store-aisle-detection.mp4` | [Intel sample-videos](https://github.com/intel-iot-devkit/sample-videos) |
+| Pedestrians / heat map | `people-detection.mp4` | Intel sample-videos |
+| Vehicles / traffic | `person-bicycle-car-detection.mp4` | Intel sample-videos |
+| Fire | `fire-burning.ogv` | [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Fire_burning.ogv) |
 
-Open [http://127.0.0.1:8080](http://127.0.0.1:8080).
+Open [http://127.0.0.1:8080](http://127.0.0.1:8080). Clips loop continuously.
+
+To prove **RTSP ingest**, uncomment the Wowza test camera in `configs/cameras.demo.yaml` (official looping test stream, not analytics footage) or publish your own:
+
+```bash
+ffmpeg -re -stream_loop -1 -i samples/store-aisle-detection.mp4 -c copy -f rtsp rtsp://127.0.0.1:8554/store
+```
+
+Synthetic fallback (no downloads): `python -m vision_analytics.main --synthetic`
+
+On CPU (including macOS without NVIDIA), the first YOLO pass is slow. The pipeline **warms up** both models before cameras start and waits up to 60s per batch. Apple Silicon uses `device=mps` automatically.
 
 Live RTSP:
 

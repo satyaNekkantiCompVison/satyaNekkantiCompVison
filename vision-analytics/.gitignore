@@ -7,7 +7,10 @@ dist/
 build/
 data/*.db
 data/snapshots/
-weights/*.pt
+samples/*.mp4
+samples/*.ogv
+samples/*.webm
+samples/*.avi
 runs/
 .venv/
 venv/

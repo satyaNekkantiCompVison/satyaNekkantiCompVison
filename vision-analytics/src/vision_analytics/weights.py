@@ -43,7 +43,7 @@ def _request(url: str) -> urllib.request.Request:
     return urllib.request.Request(url, headers=headers)
 
 
-def download_file(url: str, dest: Path, timeout: int = 120) -> None:
+def download_url(url: str, dest: Path, timeout: int = 120) -> None:
     dest.parent.mkdir(parents=True, exist_ok=True)
     tmp = dest.with_suffix(dest.suffix + ".part")
     req = _request(url)
@@ -54,6 +54,10 @@ def download_file(url: str, dest: Path, timeout: int = 120) -> None:
                 break
             out.write(chunk)
     tmp.replace(dest)
+
+
+def download_file(url: str, dest: Path, timeout: int = 120) -> None:
+    download_url(url, dest, timeout=timeout)
     if not is_valid_checkpoint(dest):
         dest.unlink(missing_ok=True)
         raise RuntimeError(f"downloaded file from {url} is not a valid YOLO checkpoint")

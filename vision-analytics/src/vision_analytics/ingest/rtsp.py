@@ -54,17 +54,27 @@ class FrameSource:
         if self._thread:
             self._thread.join(timeout=2.0)
 
+    def _is_loopable(self) -> bool:
+        if self.source.isdigit():
+            return False
+        src = self.source.lower()
+        if src.startswith(("rtsp://", "rtsps://")):
+            return False
+        return True
+
     def _open_capture(self) -> cv2.VideoCapture:
         src: str | int = self.source
         if self.source.isdigit():
             src = int(self.source)
-        cap = cv2.VideoCapture(src, cv2.CAP_FFMPEG if isinstance(src, str) and src.startswith("rtsp") else cv2.CAP_ANY)
+        use_ffmpeg = isinstance(src, str) and src.startswith(("rtsp://", "rtsps://", "http://", "https://"))
+        cap = cv2.VideoCapture(src, cv2.CAP_FFMPEG if use_ffmpeg else cv2.CAP_ANY)
         cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
         return cap
 
     def _loop(self) -> None:
         min_interval = 1.0 / self.sample_fps
         last_emit = 0.0
+        loopable = self._is_loopable()
         while not self._stop.is_set():
             cap = self._open_capture()
             if not cap.isOpened():
@@ -77,9 +87,13 @@ class FrameSource:
             while not self._stop.is_set():
                 ok, frame = cap.read()
                 if not ok or frame is None:
-                    self.alive = False
-                    self.error = "frame read failed (reconnect)"
-                    break
+                    if loopable:
+                        cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+                        ok, frame = cap.read()
+                    if not ok or frame is None:
+                        self.alive = False
+                        self.error = "frame read failed (reconnect)"
+                        break
                 now = time.monotonic()
                 self._decoded.append(now)
                 if len(self._decoded) >= 2:
@@ -90,7 +104,7 @@ class FrameSource:
                 last_emit = now
                 self.buffer.put(frame)
             cap.release()
-            time.sleep(0.5)
+            time.sleep(0.15 if loopable else 0.5)
 
 
 class SyntheticSource(FrameSource):
