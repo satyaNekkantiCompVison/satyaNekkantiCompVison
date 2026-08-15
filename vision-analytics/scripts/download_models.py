@@ -1,21 +1,23 @@
 #!/usr/bin/env python3
-"""Download pretrained YOLO checkpoints used by the shared inference engine."""
+"""Download pretrained YOLO checkpoints used by the shared inference engine.
+
+Fire/smoke defaults to public GitHub/Hugging Face mirrors because
+keremberke/yolov8n-fire-and-smoke-detection currently returns HTTP 401
+without a Hugging Face token. Set HF_TOKEN to also try gated HF repos.
+"""
 
 from __future__ import annotations
 
 import argparse
-import urllib.request
+import sys
 from pathlib import Path
 
-COCO = "https://github.com/ultralytics/assets/releases/download/v8.3.0/yolov8n.pt"
-FIRE = "https://huggingface.co/keremberke/yolov8n-fire-and-smoke-detection/resolve/main/best.pt"
+ROOT = Path(__file__).resolve().parents[1]
+SRC = ROOT / "src"
+if str(SRC) not in sys.path:
+    sys.path.insert(0, str(SRC))
 
-
-def _download(url: str, dest: Path) -> None:
-    dest.parent.mkdir(parents=True, exist_ok=True)
-    print(f"Downloading {url} -> {dest}")
-    urllib.request.urlretrieve(url, dest)
-    print(f"Saved {dest} ({dest.stat().st_size} bytes)")
+from vision_analytics.weights import COCO_URLS, FIRE_URLS, ensure_weights  # noqa: E402
 
 
 def main() -> None:
@@ -23,13 +25,10 @@ def main() -> None:
     parser.add_argument("--weights-dir", default="weights")
     args = parser.parse_args()
     root = Path(args.weights_dir)
-    _download(COCO, root / "yolov8n.pt")
-    try:
-        _download(FIRE, root / "yolov8n-fire-smoke.pt")
-    except Exception as exc:
-        print(f"Fire/smoke checkpoint download failed ({exc}).")
-        print("Place a pretrained fire/smoke YOLO .pt at weights/yolov8n-fire-smoke.pt")
-        print("COCO yolov8n still covers person/vehicle/traffic-light for store + traffic.")
+    coco = ensure_weights(root / "yolov8n.pt", COCO_URLS)
+    print(f"COCO weights ready: {coco}")
+    fire = ensure_weights(root / "yolov8n-fire-smoke.pt", FIRE_URLS)
+    print(f"Fire/smoke weights ready: {fire}")
 
 
 if __name__ == "__main__":

@@ -15,8 +15,12 @@ models:
     task: detect
   fire:
     # Pretrained fire/smoke YOLO. Download with: python scripts/download_models.py
+    # keremberke is gated (HTTP 401); GitHub + rabahdev mirrors are used first.
     weights: "weights/yolov8n-fire-smoke.pt"
-    url: "https://huggingface.co/keremberke/yolov8n-fire-and-smoke-detection/resolve/main/best.pt"
+    url: "https://github.com/Nocluee100/Fire-and-Smoke-Detection-yolov8-v1/raw/main/weights/best.pt"
+    urls:
+      - "https://huggingface.co/rabahdev/fire-smoke-yolov8n/resolve/main/best.pt"
+      - "https://huggingface.co/keremberke/yolov8n-fire-and-smoke-detection/resolve/main/best.pt"
     classes: ["fire", "smoke"]
 
 storage:

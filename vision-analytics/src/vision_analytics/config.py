@@ -23,7 +23,15 @@ class ModelSlotConfig(BaseModel):
     weights: str
     task: str = "detect"
     url: str | None = None
+    urls: list[str] = Field(default_factory=list)
     classes: list[str] | None = None
+
+    def download_urls(self) -> list[str]:
+        ordered: list[str] = []
+        for item in [self.url, *self.urls]:
+            if item and item not in ordered:
+                ordered.append(item)
+        return ordered
 
 
 class StorageConfig(BaseModel):

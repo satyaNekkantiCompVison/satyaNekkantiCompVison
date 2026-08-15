@@ -19,6 +19,7 @@ from vision_analytics.ingest.rtsp import FrameSource, SyntheticSource
 from vision_analytics.overlay import draw_overlay, heatmap_image
 from vision_analytics.storage import EventStore
 from vision_analytics.types import Detection, FIRE_CLASS_ALIASES
+from vision_analytics.weights import FIRE_URLS, ensure_weights
 
 log = logging.getLogger(__name__)
 
@@ -122,10 +123,15 @@ class AnalyticsPipeline:
             weights = slot.weights if slot else "yolov8n.pt"
             names_override = None
             class_filter = COCO_FILTER if key == "coco" else None
-            if key == "fire" and slot and slot.classes:
-                # Dedicated fire checkpoints often use 0=fire, 1=smoke
-                names_override = {i: n for i, n in enumerate(slot.classes)}
-                class_filter = set(slot.classes)
+            if key == "fire":
+                # Keep checkpoint class names (some D-Fire models are smoke=0, fire=1).
+                class_filter = {"fire", "flame", "smoke"}
+                urls = slot.download_urls() if slot else []
+                if not self.mock:
+                    try:
+                        weights = str(ensure_weights(weights, urls or FIRE_URLS))
+                    except Exception:
+                        log.exception("could not download fire/smoke weights; continuing with local path %s", weights)
             try:
                 self.models[key] = load_detector(
                     weights=weights,

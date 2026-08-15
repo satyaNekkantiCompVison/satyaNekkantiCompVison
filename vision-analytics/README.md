@@ -23,7 +23,7 @@ RTSP / file / webcam          Shared GPU worker              Analytics
 | Slot | Weights | Classes used |
 | --- | --- | --- |
 | `coco` | Ultralytics `yolov8n.pt` | person, bicycle, car, motorcycle, bus, truck, traffic light |
-| `fire` | `keremberke/yolov8n-fire-and-smoke-detection` | fire, smoke |
+| `fire` | public YOLOv8n fire/smoke checkpoint (GitHub mirror; Hugging Face fallbacks) | fire, smoke |
 
 Fine-tune later with `scripts/finetune.py` and point `configs/default.yaml` at `best.pt`. Optional TensorRT/ONNX export is on that same script (`--export engine`).
 
@@ -33,6 +33,8 @@ python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
 python scripts/download_models.py
 ```
+
+If a Hugging Face URL returns **HTTP 401 Unauthorized**, that checkpoint is gated. The downloader already skips it and uses a public GitHub mirror (`Nocluee100/.../best.pt`) then `rabahdev/fire-smoke-yolov8n`. Optional: `export HF_TOKEN=...` to retry gated HF repos.
 
 ## Run the dashboard
 
