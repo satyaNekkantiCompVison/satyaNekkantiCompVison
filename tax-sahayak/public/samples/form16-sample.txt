@@ -1,0 +1,18 @@
+Form 16
+Certificate under section 203 of the Income-tax Act
+Name of Employee: Anita Sharma
+PAN: ABCDE1234F
+TAN: MUMD12345E
+Employer: Sahyadri Tech Pvt Ltd
+Gross Salary: 1800000
+Basic Salary: 720000
+House Rent Allowance: 360000
+Special Allowance: 720000
+Employee PF: 86400
+Employer PF: 86400
+Professional Tax: 2400
+Tax Deducted at Source: 118000
+Rent Paid: 300000
+Section 80C: 86400
+Health Insurance: 0
+City: Mumbai
