@@ -1,0 +1,14 @@
+Offer Letter
+Cost to Company (CTC)
+Dear Rohan Mehta
+Company: Narmada Systems Pvt Ltd
+Annual CTC: 2400000
+Basic per month: 80000
+HRA per month: 40000
+Special Allowance per month: 55000
+LTA per month: 5000
+Employer PF per month: 9600
+Employee PF per month: 9600
+Employer NPS per month: 0
+Location: Bengaluru (non-metro for HRA)
+Variable Pay / Bonus: 180000
